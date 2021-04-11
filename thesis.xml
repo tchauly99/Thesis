@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cdtprojectproperties>
+<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.IncludePaths">
+<language name="s,S">
+<includepath>Drivers/COMPONENTS/TEST</includepath>
+
+</language>
+<language name="C Source File">
+<includepath>Core/Inc</includepath>
+<includepath>Drivers/STM32F4xx_HAL_Driver/Inc</includepath>
+<includepath>Drivers/STM32F4xx_HAL_Driver/Inc/Legacy</includepath>
+<includepath>Drivers/CMSIS/Device/ST/STM32F4xx/Include</includepath>
+<includepath>Drivers/CMSIS/Include</includepath>
+
+</language>
+<language name="C++ Source File">
+<includepath>Core/Inc</includepath>
+<includepath>Drivers/STM32F4xx_HAL_Driver/Inc</includepath>
+<includepath>Drivers/STM32F4xx_HAL_Driver/Inc/Legacy</includepath>
+<includepath>Drivers/CMSIS/Device/ST/STM32F4xx/Include</includepath>
+<includepath>Drivers/CMSIS/Include</includepath>
+<includepath>CPP/inc</includepath>
+<includepath>Drivers/COMPONENTS/test</includepath>
+<includepath>Drivers/COMPONENTS/MPU9250</includepath>
+<includepath>Drivers/TJ_MPU6050</includepath>
+<includepath>Drivers/MAGWICK_FILTER</includepath>
+<includepath>Drivers/COMPONENTS/ROS</includepath>
+<includepath>Drivers/rosserial</includepath>
+<includepath>Drivers/rosserial/include</includepath>
+<includepath>Drivers/COMPONENTS/MADGWICK</includepath>
+
+</language>
+<language name="Object File">
+
+</language>
+</section>
+<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.Macros">
+<language name="s,S">
+
+</language>
+<language name="C Source File">
+<macro>
+<name>USE_HAL_DRIVER</name><value/>
+</macro>
+<macro>
+<name>DEBUG</name><value/>
+</macro>
+<macro>
+<name>STM32F407xx</name><value/>
+</macro>
+
+</language>
+<language name="C++ Source File">
+<macro>
+<name>USE_HAL_DRIVER</name><value/>
+</macro>
+<macro>
+<name>DEBUG</name><value/>
+</macro>
+<macro>
+<name>STM32F407xx</name><value/>
+</macro>
+
+</language>
+<language name="Object File">
+
+</language>
+</section>
+</cdtprojectproperties>
