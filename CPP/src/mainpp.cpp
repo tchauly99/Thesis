@@ -141,7 +141,7 @@ void loop(void){
 	}
 
 	//send_logmsg();
-	nh.spinOnce();
+		nh.spinOnce();
 	waitfor_SerialLink(nh.connected());
 #endif
 #ifdef IMU_CALIB
@@ -170,7 +170,6 @@ void ros_setup(void)
 	/*advertise*/
 //	nh.advertise(chatter);
 	nh.advertise(yaw_pub);
-	ros::Publisher abc = nh.advertise<std_msgs::UInt16>("abc", 100);
 	nh.advertise(imu_pub);              /*!< Register the publisher to "imu" topic */
 //    nh.advertise(cmd_vel_motor_pub);    /*!< Register the publisher to "cmd_vel_motor" topic */
     nh.advertise(odom_pub);             /*!< Register the publisher to "odom" topic */
