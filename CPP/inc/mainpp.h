@@ -84,6 +84,9 @@ float goal_cmd_vel[2] = {0.0, 0.0}; //from ros command in linear and angular val
 float goal_wheel_vel_PID[2] = {0.0, 0.0};
 //float pre_goal_wheel_vel[2] = {0.0, 0.0};
 
+float delta_theta, theta, last_theta = 0.0;
+float robot_speed;
+
 uint8_t buffer[3];
 
 float quat[4];

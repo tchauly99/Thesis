@@ -8,12 +8,14 @@
 #include "mainpp.h"
 #define IMU_600USD_SIZE 80
 #define IMU_600USD
+//#define IMU_CALIB
+#define ROS
 //#define DUTY_DB
 Encoder Enc_L((13*4*28.8461), LEFT, 3, 1, 0.01);
 Encoder Enc_R((13*4*28.8461), RIGHT, 3, 1, 0.01); //24.0384
-uint8_t imu_receive_buffer[88];
-uint8_t imu_temp[88];
-uint8_t imu_cache[44];
+uint8_t imu_receive_buffer[IMU_600USD_SIZE*2];
+uint8_t imu_temp[IMU_600USD_SIZE*2];
+uint8_t imu_cache[IMU_600USD_SIZE];
 IMU_value imu_value;
 IMU_prevalue imu_prevalue;
 IMU_sensor_prevalue IMU_premag;
@@ -23,6 +25,7 @@ uint8_t IMU_index=0;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+
 	 if(htim->Instance== htim9.Instance)
 	 {
 		 cnt++;
@@ -43,20 +46,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			 cnt = 0;
 			 flag_b[SIXTY] = true;
 			Get_encoder();
+			robot_speed = (Enc_L.encoder_speed_inmeter + Enc_R.encoder_speed_inmeter)*100/2.0;
+			//yaw_msg.data = odom_pose[0];
+			yaw_msg.data = robot_speed;
 #ifndef DUTY_DB
 			Control_motor();
 #endif
-			//update_quaternion();
+#ifndef IMU_600USD
+			update_quaternion();
+#endif
 			//MPU9250_Get_Scaled(&Accel_scaled_disp, &Gyro_scaled_disp);
 			//MPU9250_AK8963_GetMag_Scaled(&Mag_scaled_disp);
 		 }
 		 flag_b[TWENTY]=true;
-		 IMU_600USD_Read();
-
-
-
-
-
 	}
 }
 void setup(void){
@@ -71,14 +73,16 @@ void setup(void){
 #ifdef ROS
 	ros_setup();
 #endif
-	//ros_setup();
+#ifdef IMU_CALIB
+	ros_setup();
+#endif
 #ifdef IMU_600USD
-	HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, 88);
-	IMU_600USD_GetSample();
+	HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
+	//IMU_600USD_GetSample();
 #endif
 #ifndef IMU_600USD
 	//Get magnetometer samples for calib, rotate IMU
-	MPU9250_AK8963_GetSample();
+	//MPU9250_AK8963_GetSample();
 #endif
 	//HAL_Delay(2000);
 	//str_msg.data = hello;
@@ -123,6 +127,7 @@ void loop(void){
 	if (flag_b[SIXTY]){
 		//chatter.publish(&str_msg);
 		publish_IMU();
+		yaw_pub.publish(&yaw_msg);
 		flag_b[SIXTY] = false;
 	}
 
@@ -137,7 +142,14 @@ void loop(void){
 
 	//send_logmsg();
 	nh.spinOnce();
-	//waitfor_SerialLink(nh.connected());
+	waitfor_SerialLink(nh.connected());
+#endif
+#ifdef IMU_CALIB
+#ifdef IMU_600USD
+	IMU_600USD_GetSample();
+#else
+	MPU9250_AK8963_GetSample();
+#endif
 #endif
 }
 
@@ -145,10 +157,12 @@ void ros_setup(void)
 {
 	nh.initNode();
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
+#ifndef IMU_CALIB
 	while(!nh.connected())
 	  {
 		nh.spinOnce();
 	  }
+#endif
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
 	nh.loginfo("Init node successfully!");
 	nh.loginfo("Write Led Red successfully!");
@@ -156,6 +170,7 @@ void ros_setup(void)
 	/*advertise*/
 //	nh.advertise(chatter);
 	nh.advertise(yaw_pub);
+	ros::Publisher abc = nh.advertise<std_msgs::UInt16>("abc", 100);
 	nh.advertise(imu_pub);              /*!< Register the publisher to "imu" topic */
 //    nh.advertise(cmd_vel_motor_pub);    /*!< Register the publisher to "cmd_vel_motor" topic */
     nh.advertise(odom_pub);             /*!< Register the publisher to "odom" topic */
@@ -179,9 +194,9 @@ void IMU_600USD_Read(void){
 	memcpy(imu_prevalue.pitch, &imu_cache[8], 6);
 	memcpy(imu_prevalue.yaw, &imu_cache[15], 6);
 
-	imu_value.roll = atof(imu_prevalue.roll)/100.0;
+	imu_value.roll = -atof(imu_prevalue.roll)/100.0;
 	imu_value.pitch = atof(imu_prevalue.pitch)/100.0;
-	imu_value.yaw = atof(imu_prevalue.yaw)/100.0;
+	imu_value.yaw = -atof(imu_prevalue.yaw)/100.0;
 
 	memcpy(IMU_premag.x, &imu_cache[61], 5);
 	memcpy(IMU_premag.y, &imu_cache[67], 5);
@@ -193,26 +208,40 @@ void IMU_600USD_Read(void){
 
 }
 void IMU_600USD_GetSample(void){
-	int i, sample_count;
-	sample_count = 2000;
+//	int i, sample_count;
+//	sample_count = 2000;
+//	IMU_sensor_prevalue IMU_magsample;
+//	char buffer[50];
+//	for (i = 0; i < sample_count + 100; i++)            /*!< Dismiss 100 first value */
+//	    {
+//	        if (i > 100 && i <= (sample_count + 100))
+//	        {
+//	        	memcpy(&IMU_magsample, &IMU_premag, sizeof(IMU_premag));
+//	        	memcpy(buffer, IMU_magsample.x, sizeof(IMU_magsample.x));
+//	        	buffer[5] = buffer[12] = ',';
+//	        	buffer[18] = '\n';
+//	        	memcpy(&buffer[6], IMU_magsample.y, sizeof(IMU_magsample.y));
+//	        	memcpy(&buffer[13], IMU_magsample.z, sizeof(IMU_magsample.z));
+//	            //n = sprintf(buffer,"%10.2f, %10.2f, %10.2f \n", Sample[0], Sample[1], Sample[2]);
+//	            HAL_UART_Transmit(&huart4, (uint8_t*)buffer, 19, 100);
+//	        }
+//	        HAL_Delay(20);
+//	    }
+
+	static int i;
 	IMU_sensor_prevalue IMU_magsample;
 	char buffer[50];
-	for (i = 0; i < sample_count + 100; i++)            /*!< Dismiss 100 first value */
-	    {
-	        if (i > 100 && i <= (sample_count + 100))
-	        {
-	        	memcpy(&IMU_magsample, &IMU_premag, sizeof(IMU_premag));
-	        	memcpy(buffer, &IMU_magsample, sizeof(*IMU_magsample.x));
-	        	buffer[5] = buffer[12] = ',';
-	        	buffer[18] = '\n';
-	        	memcpy(&buffer[6], &IMU_magsample, sizeof(*IMU_magsample.y));
-	        	memcpy(&buffer[13], &IMU_magsample, sizeof(*IMU_magsample.z));
-	            //n = sprintf(buffer,"%10.2f, %10.2f, %10.2f \n", Sample[0], Sample[1], Sample[2]);
-	            HAL_UART_Transmit(&huart4, (uint8_t*)buffer, 19, 100);
-	        }
-	        HAL_Delay(20);
-	    }
-
+	i++;
+	if (i > 100)
+	{
+		memcpy(&IMU_magsample, &IMU_premag, sizeof(IMU_premag));
+		memcpy(buffer, IMU_magsample.x, sizeof(IMU_magsample.x));
+		buffer[5] = buffer[11] = ',';
+		buffer[17] = '\n';
+		memcpy(&buffer[6], IMU_magsample.y, sizeof(IMU_magsample.y));
+		memcpy(&buffer[12], IMU_magsample.z, sizeof(IMU_magsample.z));
+		HAL_UART_Transmit(&huart4, (uint8_t*)buffer, 18, 100);
+	}
 }
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
@@ -229,7 +258,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			 }
 		 }
 	 }
+	 //nh.spinOnce();
 	 IMU_index=i;
+	 IMU_600USD_Read();
 	 HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
 	}
 }
@@ -320,17 +351,21 @@ void Get_encoder(void){
 }
 void Encoder::PID_control(void){
 	double out;
-
 	ek_2 = ek_1;
 	ek_1 = ek;
 	ek = (double)goal_wheel_vel - (double)encoder_speed;
-	uk += Kp*(ek-ek_1) +Ki*(T/2)*(ek+ek_1) + (Kd/T)*(ek-2*ek_1+ek_2);
+
+	if(goal_wheel_vel<0.7 && goal_wheel_vel>-0.7)
+		uk=0;
+	else uk += Kp*(ek-ek_1) +Ki*(T/2)*(ek+ek_1) + (Kd/T)*(ek-2*ek_1+ek_2);
 
 	out = uk;
 	if(uk>u_max) out=u_max;
 	if(ek<(-u_max)) out=-u_max;
 
 	duty = (float)(out);
+
+
 	Encoder::set_PWM();
 }
 /*
@@ -409,6 +444,7 @@ void Encoder::get_encoder(void){
 		pre_counter=TIM3->CNT;
 	}
 	Encoder::get_speed();
+
 }
 void get_speed_100ms(float* encoder_inrad_100){
 	static uint16_t pre_counter_100[2]={0, 0};
@@ -422,11 +458,9 @@ void get_speed_100ms(float* encoder_inrad_100){
 	pre_counter_100[RIGHT]=TIM2->CNT;
 }
 void get_odom(void){
-	float delta_s, theta, roll, pitch, yaw;
-	static float delta_theta;
+	float delta_s, roll, pitch, yaw;
 	float quat_data[4];
 	float v,w;
-	static float last_theta = 0.0;
 	float encoder_inrad[2];
 	static uint8_t delay=0;
 
@@ -451,6 +485,8 @@ void get_odom(void){
 		yaw=theta;
 
 		delta_theta = theta - last_theta;
+		if ( delta_theta>=6.0 || delta_theta<= -6.0)
+				delta_theta = 0;
 
 		odom_pose[0] += delta_s * cos(odom_pose[2] + (delta_theta / 2.0));
 		odom_pose[1] += delta_s * sin(odom_pose[2] + (delta_theta / 2.0));
@@ -459,28 +495,31 @@ void get_odom(void){
 		v = delta_s/0.1;
 		w = DEG2RAD(Gyro_scaled_disp.z)*(cosf(roll)/cosf(pitch));
 		//w = delta_theta/0.1;
-		odom_vel[0] = v;
-		odom_vel[1] = 0.0;
-		odom_vel[2] = w;
-
-		last_theta = theta;
 	}
 #else
-	theta = imu_value.roll;
-	delta_theta = theta - last_theta;
-	odom_pose[0] += delta_s * cos(odom_pose[2] + (delta_theta / 2.0));
-	odom_pose[1] += delta_s * sin(odom_pose[2] + (delta_theta / 2.0));
-	odom_pose[2] += delta_theta;
+	theta = DEG2RAD(imu_value.yaw);
+	if (delay<30){
+		delay++;
+		last_theta=theta;
+	}
+	else{
+		delta_theta = theta - last_theta;
+		if ( delta_theta>=6.0 | delta_theta<= -6.0)
+			delta_theta = 0;
+		odom_pose[0] += delta_s * cos(odom_pose[2] + (delta_theta / 2.0));
+		odom_pose[1] += delta_s * sin(odom_pose[2] + (delta_theta / 2.0));
+		odom_pose[2] += delta_theta;
 
-	v = delta_s/0.1;
-	w = delta_theta/0.1;
+		v = delta_s/0.1;
+		w = delta_theta/0.1;
+	}
+
+#endif
 	odom_vel[0] = v;
 	odom_vel[1] = 0.0;
 	odom_vel[2] = w;
 
 	last_theta = theta;
-#endif
-
 
 }
 
@@ -495,8 +534,6 @@ void prepub_odom(void){
 
 	odom.twist.twist.linear.x  = odom_vel[0];
 	odom.twist.twist.angular.z = odom_vel[2];
-
-	yaw_msg.data = RAD2DEG(odom_pose[2]);
 }
 void update_TF(geometry_msgs::TransformStamped& odom_tf)
 {
@@ -519,7 +556,7 @@ void publish_driveinfo(void){
 	odom_tf.header.stamp = stamp_now;
 	tf_broadcaster.sendTransform(odom_tf);
 
-	yaw_pub.publish(&yaw_msg);
+//	yaw_pub.publish(&yaw_msg);
 }
 void led_toggle (void)
 {

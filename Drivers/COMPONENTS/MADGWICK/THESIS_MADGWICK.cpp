@@ -13,7 +13,6 @@ madgwick_handle_t madgwick_handle=&m;
 
 
 void MADGWICK_Quaternion_Update(void){
-#ifndef IMU_600USD
 	ScaledData_Def accel_scaled;
 	ScaledData_Def gyro_scaled;
 	ScaledData_Def mag_scaled;
@@ -40,7 +39,6 @@ void MADGWICK_Quaternion_Update(void){
 //				 accel_scaled.x/10.0,
 //				 accel_scaled.y/10.0,
 //				 accel_scaled.z/10.0);
-#endif
 }
 
 void MADGWICK_Get_Quaternion(float *quat){
