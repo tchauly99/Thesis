@@ -6,21 +6,13 @@
  */
 #define CODE_CPP
 #include "mainpp.h"
-#define IMU_600USD_SIZE 80
 #define IMU_600USD
 //#define IMU_CALIB
 #define ROS
 //#define DUTY_DB
 Encoder Enc_L((13*4*28.8461), LEFT, 3, 1, 0.01);
 Encoder Enc_R((13*4*28.8461), RIGHT, 3, 1, 0.01); //24.0384
-uint8_t imu_receive_buffer[IMU_600USD_SIZE*2];
-uint8_t imu_temp[IMU_600USD_SIZE*2];
-uint8_t imu_cache[IMU_600USD_SIZE];
-IMU_value imu_value;
-IMU_prevalue imu_prevalue;
-IMU_sensor_prevalue IMU_premag;
-IMU_sensor_value IMU_mag;
-uint8_t IMU_index=0;
+
 //float Encoder::test = 2;
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
@@ -62,6 +54,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 }
 void setup(void){
+	//ros_setup();
+	//HAL_UART_Receive_DMA(&huart5, serial_buffer, 3);
 
 #ifndef IMU_600USD
 	//Choose if to calib IMU:
@@ -78,6 +72,7 @@ void setup(void){
 #endif
 #ifdef IMU_600USD
 	HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
+
 	//IMU_600USD_GetSample();
 #endif
 #ifndef IMU_600USD
@@ -111,6 +106,8 @@ void setup(void){
 	//nh.loginfo("Advertise and Subcribe successfully!");
 }
 void loop(void){
+	static bool wait_advertise = false;
+	static uint8_t wait = 0;
 #ifdef ROS
 	update_Variable(nh.connected());     /*!< Update variable */
 	update_TFPrefix(nh.connected());
@@ -124,26 +121,38 @@ void loop(void){
 #endif
 
 #ifdef ROS
-	if (flag_b[SIXTY]){
-		//chatter.publish(&str_msg);
-		publish_IMU();
-		yaw_pub.publish(&yaw_msg);
-		flag_b[SIXTY] = false;
+	if (!wait_advertise){
+		if (flag_b[TWO_HUNDRED]){
+			if(wait == 50) {
+				wait_advertise = true;
+				nh.negotiateTopics();
+			}
+			else wait++;
+		}
 	}
 
-	if (flag_b[ONE_HUNDRED]){
-		publish_driveinfo();
-		flag_b[ONE_HUNDRED] = false;
-	}
+	else{
+		if (flag_b[SIXTY]){
+			//chatter.publish(&str_msg);
+			//publish_IMU();
+			yaw_pub.publish(&yaw_msg);
+			flag_b[SIXTY] = false;
+		}
 
-	if (flag_b[TWO_HUNDRED]){
-		flag_b[TWO_HUNDRED] = false;
-	}
+		if (flag_b[ONE_HUNDRED]){
+			publish_driveinfo();
+			flag_b[ONE_HUNDRED] = false;
+		}
 
+		if (flag_b[TWO_HUNDRED]){
+			flag_b[TWO_HUNDRED] = false;
+		}
+	}
 	//send_logmsg();
-		nh.spinOnce();
-	waitfor_SerialLink(nh.connected());
+	nh.spinOnce();
+	//waitfor_SerialLink(nh.connected());
 #endif
+
 #ifdef IMU_CALIB
 #ifdef IMU_600USD
 	IMU_600USD_GetSample();
@@ -167,6 +176,11 @@ void ros_setup(void)
 	nh.loginfo("Init node successfully!");
 	nh.loginfo("Write Led Red successfully!");
 
+	/*subcribe*/
+	nh.subscribe(toggle_sub);
+	nh.subscribe(cmd_vel_sub);          /*!< Subscribe "cmd_vel" topic to get motor cmd */
+    //nh.subscribe(reset_sub);            /*!< Subscribe "reset" topic */
+
 	/*advertise*/
 //	nh.advertise(chatter);
 	nh.advertise(yaw_pub);
@@ -174,15 +188,10 @@ void ros_setup(void)
 //    nh.advertise(cmd_vel_motor_pub);    /*!< Register the publisher to "cmd_vel_motor" topic */
     nh.advertise(odom_pub);             /*!< Register the publisher to "odom" topic */
 
-	/*subcribe*/
-	nh.subscribe(toggle_sub);
-	nh.subscribe(cmd_vel_sub);          /*!< Subscribe "cmd_vel" topic to get motor cmd */
-    //nh.subscribe(reset_sub);            /*!< Subscribe "reset" topic */
-
 
     tf_broadcaster.init(nh);            /*!< Init TransformBroadcaster */
     HAL_Delay(500);
-    nh.negotiateTopics();
+    //nh.negotiateTopics();
 
 }
 void IMU_600USD_Read(void){
@@ -196,14 +205,15 @@ void IMU_600USD_Read(void){
 	imu_value.roll = -atof(imu_prevalue.roll)/100.0;
 	imu_value.pitch = atof(imu_prevalue.pitch)/100.0;
 	imu_value.yaw = -atof(imu_prevalue.yaw)/100.0;
+	nh.spinOnce();
 
-	memcpy(IMU_premag.x, &imu_cache[61], 5);
-	memcpy(IMU_premag.y, &imu_cache[67], 5);
-	memcpy(IMU_premag.z, &imu_cache[73], 5);
-
-	IMU_mag.x = atof(IMU_premag.x);
-	IMU_mag.y = atof(IMU_premag.y);
-	IMU_mag.z = atof(IMU_premag.z);
+//	memcpy(IMU_premag.x, &imu_cache[61], 5);
+//	memcpy(IMU_premag.y, &imu_cache[67], 5);
+//	memcpy(IMU_premag.z, &imu_cache[73], 5);
+//
+//	IMU_mag.x = atof(IMU_premag.x);
+//	IMU_mag.y = atof(IMU_premag.y);
+//	IMU_mag.z = atof(IMU_premag.z);
 
 }
 void IMU_600USD_GetSample(void){
@@ -242,27 +252,29 @@ void IMU_600USD_GetSample(void){
 		HAL_UART_Transmit(&huart4, (uint8_t*)buffer, 18, 100);
 	}
 }
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-
-	if(huart->Instance== huart5.Instance){
-	HAL_UART_DMAStop(&huart5);
-	 uint8_t i=0;
-	 memcpy(imu_temp, imu_receive_buffer, IMU_600USD_SIZE*2);
-	 for(i=0; i<(IMU_600USD_SIZE*2); i++){
-		 if (imu_temp[i]=='\n'){
-			 if(imu_temp[i+IMU_600USD_SIZE-1]=='\r'){
-				 memcpy(imu_cache, &imu_temp[i], IMU_600USD_SIZE);
-				 break;
-			 }
-		 }
-	 }
-	 //nh.spinOnce();
-	 IMU_index=i;
-	 IMU_600USD_Read();
-	 HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
-	}
-}
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//
+////	if(huart->Instance== huart5.Instance){
+////	HAL_UART_DMAStop(&huart5);
+////	 uint8_t i=0;
+////	 memcpy(imu_temp, imu_receive_buffer, IMU_600USD_SIZE*2);
+////	 for(i=0; i<(IMU_600USD_SIZE*2); i++){
+////		 if (imu_temp[i]=='\n'){
+////			 if(imu_temp[i+IMU_600USD_SIZE-1]=='\r'){
+////				 memcpy(imu_cache, &imu_temp[i], IMU_600USD_SIZE);
+////				 break;
+////			 }
+////		 }
+////	 }
+////	 //nh.spinOnce();
+////	 IMU_index=i;
+////	 IMU_600USD_Read();
+////	 HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
+////	if(huart->Instance== huart5.Instance){
+////		memcpy(serial_cache, serial_buffer, 3);
+////	}
+//}
 void IMU_Config(void){
 	MPU9250_Config();
 	MPU9250_AK8963_Config();
@@ -295,6 +307,7 @@ void toggle_callback(const geometry_msgs::Twist &cmd_msg)
 void cmd_vel_callback(const geometry_msgs::Twist& cmd_vel_msg){
     goal_cmd_vel[LINEAR] = cmd_vel_msg.linear.x;
     goal_cmd_vel[ANGULAR] = cmd_vel_msg.angular.z;
+    nh.spinOnce();
 }
 void reset_callback(const std_msgs::Empty &reset_msg){
 	char log_msg[50];
@@ -343,10 +356,12 @@ void Control_motor(void){
 	/*PID controller for velocity control*/
 	Enc_L.PID_control();
 	Enc_R.PID_control();
+//	nh.spinOnce();
 }
 void Get_encoder(void){
 	Enc_L.get_encoder();
 	Enc_R.get_encoder();
+//	nh.spinOnce();
 }
 void Encoder::PID_control(void){
 	double out;
@@ -519,6 +534,7 @@ void get_odom(void){
 	odom_vel[2] = w;
 
 	last_theta = theta;
+//	nh.spinOnce();
 
 }
 

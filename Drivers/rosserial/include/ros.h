@@ -28,7 +28,7 @@
 
 namespace ros
 {
-typedef NodeHandle_<STM32Hardware, 25, 25, BUF_SIZE, BUF_SIZE> NodeHandle;
+typedef NodeHandle_<STM32Hardware, 25, 25, BUF_SIZE, BUF_SIZE> NodeHandle; //25 25 B B
 }
 
 #endif /* ROSSERIAL_CLIENT_SRC_ROS_LIB_ROS_H_ */

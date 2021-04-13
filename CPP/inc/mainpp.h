@@ -12,13 +12,6 @@
 
 #ifdef CODE_CPP
 
-#include "stdio.h"
-#include "test.h"
-#include "THESIS_MADGWICK.h"
-#include "ROS_SETUP.h"
-
-
-
 #define LINEAR 0
 #define ANGULAR 1
 #define LEFT 0
@@ -30,6 +23,13 @@
 #define RAD2DEG(x)      (x * 180 / PI)
 #define IMU_HEADER 0x0A
 #define IMU_FOOTER 0x0D
+#define IMU_600USD_SIZE 80
+
+#include "stdio.h"
+#include "test.h"
+#include "THESIS_MADGWICK.h"
+#include "ROS_SETUP.h"
+
 
 enum FLAG_MS{
 	TWENTY,
@@ -70,6 +70,17 @@ extern TIM_HandleTypeDef htim9; //timer interrupt
 
 extern UART_HandleTypeDef huart5;
 extern DMA_HandleTypeDef hdma_uart5_rx;
+
+uint8_t imu_receive_buffer[IMU_600USD_SIZE*2];
+uint8_t imu_temp[IMU_600USD_SIZE*2];
+uint8_t imu_cache[IMU_600USD_SIZE];
+IMU_value imu_value;
+IMU_prevalue imu_prevalue;
+IMU_sensor_prevalue IMU_premag;
+IMU_sensor_value IMU_mag;
+uint8_t IMU_index=0;
+uint8_t serial_buffer[4];
+uint8_t serial_cache[4];
 
 bool flag_b[NUMBER_OF_FLAG];
 

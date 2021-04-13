@@ -27,12 +27,19 @@
 #endif
 #include "stm32f4xx_hal.h"
 
+extern UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart4;
 DMA_HandleTypeDef hdma_uart4_rx;
 DMA_HandleTypeDef hdma_uart4_tx;
-extern double Kp_L, Ki_L, Kd_L;
-extern double Kp_R, Ki_R, Kd_R;
-extern uint8_t buffer[3];
+
+extern uint8_t imu_receive_buffer[IMU_600USD_SIZE*2];
+extern uint8_t imu_temp[IMU_600USD_SIZE*2];
+extern uint8_t imu_cache[IMU_600USD_SIZE];
+extern uint8_t IMU_index;
+extern void IMU_600USD_Read(void);
+
+//extern uint8_t buffer[3];
+//extern uint8_t serial_cache[4];
 static constexpr uint16_t BUF_SIZE = 4096;
 
 class SerialClass
@@ -173,9 +180,11 @@ public:
 	inline void tx_cplt_callback(void)
 	{
 		tx_cplt = true;
+
 	}
 
 	inline void reset_rbuf(void) {
+		//memcpy(rx_buf, serial_cache, 3);
 		HAL_UART_Receive_DMA(&huart, (uint8_t *) rx_buf, BUF_SIZE);
 	}
 };
@@ -196,25 +205,32 @@ extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 	}
 }
 
-//extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-//{
-//	serial.reset_rbuf();
-//	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-//	if(huart->Instance == huart4.Instance){
-//		if(buffer[0]==0 && buffer[4]==4){
-//			Kp_L = buffer[1];
-//			Kd_L = buffer[2];
-//			Ki_L = buffer[3];
-//		}
-//		else if (buffer[0]==1 && buffer[4]==5){
-//			Kp_R = buffer[1];
-//			Kd_R = buffer[2];
-//			Ki_R = buffer[3];
-//		}
-//
-//	}
-//
-//}
+extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if (huart->Instance == serial.get_handle()->Instance)
+		{
+			serial.reset_rbuf();
+			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+
+		}
+	else if(huart->Instance== huart5.Instance){
+		HAL_UART_DMAStop(&huart5);
+		 uint8_t i=0;
+		 memcpy(imu_temp, imu_receive_buffer, IMU_600USD_SIZE*2);
+		 for(i=0; i<(IMU_600USD_SIZE*2); i++){
+			 if (imu_temp[i]=='\n'){
+				 if(imu_temp[i+IMU_600USD_SIZE-1]=='\r'){
+					 memcpy(imu_cache, &imu_temp[i], IMU_600USD_SIZE);
+					 break;
+				 }
+			 }
+		 }
+		 //nh.spinOnce();
+		 IMU_index=i;
+		 IMU_600USD_Read();
+		 HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
+	}
+}
 
 extern "C" void DMA1_Stream2_IRQHandler(void)
 {
