@@ -78,9 +78,9 @@ IMU_value imu_value;
 IMU_prevalue imu_prevalue;
 IMU_sensor_prevalue IMU_premag;
 IMU_sensor_value IMU_mag;
-uint8_t IMU_index=0;
-uint8_t serial_buffer[4];
-uint8_t serial_cache[4];
+//uint8_t IMU_index=0;
+//uint8_t serial_buffer[4];
+//uint8_t serial_cache[4];
 
 bool flag_b[NUMBER_OF_FLAG];
 

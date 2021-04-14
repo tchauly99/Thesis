@@ -35,7 +35,7 @@ DMA_HandleTypeDef hdma_uart4_tx;
 extern uint8_t imu_receive_buffer[IMU_600USD_SIZE*2];
 extern uint8_t imu_temp[IMU_600USD_SIZE*2];
 extern uint8_t imu_cache[IMU_600USD_SIZE];
-extern uint8_t IMU_index;
+//extern uint8_t IMU_index;
 extern void IMU_600USD_Read(void);
 
 //extern uint8_t buffer[3];
@@ -207,14 +207,8 @@ extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if (huart->Instance == serial.get_handle()->Instance)
-		{
-			serial.reset_rbuf();
-			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-
-		}
-	else if(huart->Instance== huart5.Instance){
-		HAL_UART_DMAStop(&huart5);
+	if(huart->Instance== huart5.Instance){
+		//HAL_UART_DMAStop(&huart5);
 		 uint8_t i=0;
 		 memcpy(imu_temp, imu_receive_buffer, IMU_600USD_SIZE*2);
 		 for(i=0; i<(IMU_600USD_SIZE*2); i++){
@@ -226,9 +220,13 @@ extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			 }
 		 }
 		 //nh.spinOnce();
-		 IMU_index=i;
+//		 IMU_index=i;
 		 IMU_600USD_Read();
-		 HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
+		 //HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
+	}
+	else{
+		serial.reset_rbuf();
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 	}
 }
 

@@ -149,6 +149,7 @@ void loop(void){
 		}
 	}
 	//send_logmsg();
+
 	nh.spinOnce();
 	//waitfor_SerialLink(nh.connected());
 #endif
@@ -197,7 +198,7 @@ void ros_setup(void)
 void IMU_600USD_Read(void){
 //	float cache[3];
 
-	memcpy(imu_cache, &imu_temp[IMU_index], sizeof(imu_cache));
+	//memcpy(imu_cache, &imu_temp[IMU_index], sizeof(imu_cache));
 	memcpy(imu_prevalue.roll, &imu_cache[1], 6);
 	memcpy(imu_prevalue.pitch, &imu_cache[8], 6);
 	memcpy(imu_prevalue.yaw, &imu_cache[15], 6);
@@ -205,7 +206,7 @@ void IMU_600USD_Read(void){
 	imu_value.roll = -atof(imu_prevalue.roll)/100.0;
 	imu_value.pitch = atof(imu_prevalue.pitch)/100.0;
 	imu_value.yaw = -atof(imu_prevalue.yaw)/100.0;
-	nh.spinOnce();
+	//nh.spinOnce();
 
 //	memcpy(IMU_premag.x, &imu_cache[61], 5);
 //	memcpy(IMU_premag.y, &imu_cache[67], 5);
