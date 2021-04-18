@@ -1,10 +1,46 @@
 #!/usr/bin/env python3
 import rospy
 from std_msgs.msg import String
+from geometry_msgs.msg import Twist
 import cv2
 import numpy as np
+import string
 from scipy.spatial import distance
 import time
+
+global msg
+msg = Twist()
+# chat_pub = rospy.Publisher('chatter', String, queue_size=10)
+vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+
+
+def rotate(direct):
+    if direct == "left":
+        print("Rotating to the left")
+        msg.angular.z = 0.2
+    else:
+        print("Rotating to the right")
+        msg.angular.z = -0.2
+
+
+def translate(direct):
+    if direct == "forward":
+        print("Moving forward")
+        msg.linear.x = 0.07
+    else:
+        print("Moving backward")
+        msg.linear.x = -0.07
+
+
+def robot_stop():
+    print("About to stop")
+    msg.linear.x = 0
+    msg.angular.z = 0
+
+
+def get_depth():
+    depth = 2.0
+    return depth
 
 
 def bb_intersection_over_union(boxA, boxB):
@@ -22,9 +58,8 @@ def bb_intersection_over_union(boxA, boxB):
 
 
 def talker():
-    pub = rospy.Publisher('chatter', String, queue_size=10)
     rospy.init_node('talker', anonymous=True)
-    rate = rospy.Rate(10)  # 10hz
+    # rate = rospy.Rate(20)  # 10hz
     cap = cv2.VideoCapture(0)
     print("[INFO] loading model...")
     net = cv2.dnn.readNetFromCaffe("src/tracking/src/MobileNetSSD_deploy.prototxt.txt",
@@ -34,12 +69,13 @@ def talker():
     block_flag = False
     block_count = 0
     pre_center = 0
+    follow_flag = False
     while not rospy.is_shutdown():
-        hello_str = "hello world %s" % rospy.get_time()
+        # hello_str = "hello world %s" % rospy.get_time()
         # rospy.loginfo(hello_str)
-        pub.publish(hello_str)
+        # chat_pub.publish(hello_str)
+        vel_pub.publish(msg)
         ret, frame = cap.read()
-        print(frame.shape)
         if frame is None:
             break
         start = time.time()
@@ -59,13 +95,31 @@ def talker():
                         (x1, y1, x2, y2) = box.astype("int")
                         person_box.append((x1, y1, x2, y2))
             if len(person_box) < 1:
+
+                if track_box is not None:
+                    robot_stop()
+                    if track_box[0] < tuple([10]):
+                        print("Person out of frame")
+                        direction = "left"
+                    elif (frame.shape[1] - track_box[2]) < tuple([10]):
+                        print("Person out of frame")
+                        direction = "right"
+                    else:
+                        if distance > 0:
+                            direction = "right"
+                        else:
+                            direction = "left"
+                    rotate(direction)
+                    track_box = None
+                    follow_flag = True
                 continue
+
             else:
                 if track_box is not None:
                     person_iou = list()
                     person_iou_idx = list()
                     person_idxs = list()
-                    print("Num of persons: {}".format(len(person_box)))
+                    # print("Num of persons: {}".format(len(person_box)))
                     if len(person_box) == 1:
                         iou = bb_intersection_over_union(person_box[0], track_box)
                         if iou >= 0.5:
@@ -74,7 +128,7 @@ def talker():
                     else:
                         for i in range(len(person_box)):
                             iou = bb_intersection_over_union(person_box[i], track_box)
-                            print("IOU: {}, {}".format(i, iou))
+                            # print("IOU: {}, {}".format(i, iou))
                             if iou >= 0.2:
                                 person_iou.append(iou)
                                 person_iou_idx.append(i)
@@ -98,17 +152,19 @@ def talker():
                     width = person_box[i][2] - person_box[i][0]
                     height = person_box[i][3] - person_box[i][1]
                     area = float(height / width)
-                    print("Area:{}, {}".format(i, area))
-                    print("Height, width: {}, {}".format(height, width))
+                    # print("Area:{}, {}".format(i, area))
+                    # print("Height, width: {}, {}".format(height, width))
                     delta = abs(area - 2.0)
                     if ((delta < 0.7) and (delta > -0.7)) and ((width > 100) and (height > 400)):
                         person_area.append(delta)
+                if IOU_block_flag:
+                    if len(person_area) > 1:
+                        block_flag = True
+                        print("block_flag")
+                        continue
+                    else:
+                        IOU_block_flag = False
                 if len(person_area) >= 1:
-                    if len(person_area) == 1:
-                        if IOU_block_flag:
-                            block_flag = True
-                            print("block_flag")
-                            continue
                     # print("Person legs")
                     (x1, y1, x2, y2) = person_box[np.argmin(person_area)]
                     track_box = (x1, y1, x2, y2)
@@ -124,6 +180,20 @@ def talker():
                 w = track_box[2] - track_box[0]
                 h = track_box[3] - track_box[1]
                 center = track_box[0] + (w / 2)
+                z = get_depth()
+                if follow_flag:
+                    if 310 < center < 330:
+                        robot_stop()
+                        follow_flag = False
+                else:
+                    if z < 1.0:
+                        direct = "backward"
+                        translate(direct)
+                    elif z > 1.8:
+                        direct = "forward"
+                        translate(direct)
+                    else:
+                        stop()
                 if track_box is not None:
                     distance = center - pre_center
 
@@ -148,7 +218,7 @@ def talker():
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
         stop = start
-        rate.sleep()
+        # rate.sleep()
 
 
 if __name__ == '__main__':
