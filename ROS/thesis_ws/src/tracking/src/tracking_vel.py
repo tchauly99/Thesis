@@ -17,18 +17,18 @@ vel_pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 def rotate(direct):
     if direct == "left":
         print("Rotating to the left")
-        msg.angular.z = 0.2
+        msg.angular.z = 0.4
     else:
         print("Rotating to the right")
-        msg.angular.z = -0.2
+        msg.angular.z = -0.4
 
 
 def translate(direct):
     if direct == "forward":
-        print("Moving forward")
+        # print("Moving forward")
         msg.linear.x = 0.07
     else:
-        print("Moving backward")
+        # print("Moving backward")
         msg.linear.x = -0.07
 
 
@@ -39,7 +39,7 @@ def robot_stop():
 
 
 def get_depth():
-    depth = 2.0
+    depth = 1.5
     return depth
 
 
@@ -60,6 +60,7 @@ def bb_intersection_over_union(boxA, boxB):
 def talker():
     rospy.init_node('talker', anonymous=True)
     # rate = rospy.Rate(20)  # 10hz
+    # cap = cv2.VideoCapture("test.mp4")
     cap = cv2.VideoCapture(0)
     print("[INFO] loading model...")
     net = cv2.dnn.readNetFromCaffe("src/tracking/src/MobileNetSSD_deploy.prototxt.txt",
@@ -95,8 +96,9 @@ def talker():
                         (x1, y1, x2, y2) = box.astype("int")
                         person_box.append((x1, y1, x2, y2))
             if len(person_box) < 1:
-
+                print("No person detected")
                 if track_box is not None:
+                    print(track_box)
                     robot_stop()
                     if track_box[0] < tuple([10]):
                         print("Person out of frame")
@@ -116,6 +118,7 @@ def talker():
 
             else:
                 if track_box is not None:
+                    print(track_box)
                     person_iou = list()
                     person_iou_idx = list()
                     person_idxs = list()
@@ -133,6 +136,23 @@ def talker():
                                 person_iou.append(iou)
                                 person_iou_idx.append(i)
                     if len(person_iou) < 1:
+                        if track_box is not None:
+                            print(track_box)
+                            robot_stop()
+                            if track_box[0] < tuple([10]):
+                                print("Person out of frame")
+                                direction = "left"
+                            elif (frame.shape[1] - track_box[2]) < tuple([10]):
+                                print("Person out of frame")
+                                direction = "right"
+                            else:
+                                if distance > 0:
+                                    direction = "right"
+                                else:
+                                    direction = "left"
+                            rotate(direction)
+                            track_box = None
+                            follow_flag = True
                         continue
                     person_box = [person_box[k] for k in person_iou_idx]
                     if len(person_iou) == 1:
@@ -158,12 +178,11 @@ def talker():
                     if ((delta < 0.7) and (delta > -0.7)) and ((width > 100) and (height > 400)):
                         person_area.append(delta)
                 if IOU_block_flag:
-                    if len(person_area) > 1:
+                    IOU_block_flag = False
+                    if len(person_area) >= 1:
                         block_flag = True
                         print("block_flag")
                         continue
-                    else:
-                        IOU_block_flag = False
                 if len(person_area) >= 1:
                     # print("Person legs")
                     (x1, y1, x2, y2) = person_box[np.argmin(person_area)]
@@ -193,7 +212,7 @@ def talker():
                         direct = "forward"
                         translate(direct)
                     else:
-                        stop()
+                        robot_stop()
                 if track_box is not None:
                     distance = center - pre_center
 
@@ -201,13 +220,14 @@ def talker():
                               (0, 255, 0), 2)
                 pre_center = center
         else:
-            if block_count == 10:
+            if block_count == 5:
                 block_count = 0
                 block_flag = False
                 IOU_block_flag = False
                 track_box_new = list()
                 for i in range(len(track_box)):
                     track_box_new.append(track_box[i])
+                print("Distance: {}".format(distance))
                 track_box_new[0] = track_box_new[0] + int(distance * 5)
                 track_box_new[2] = track_box_new[2] + int(distance * 5)
                 track_box = (track_box_new[0], track_box_new[1], track_box_new[2], track_box_new[3])
