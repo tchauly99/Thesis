@@ -5,9 +5,6 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Image
 import cv2
 import numpy as np
-import string
-from scipy.spatial import distance
-import time
 from cv_bridge import CvBridge
 
 global msg
@@ -20,10 +17,10 @@ bridge = CvBridge()
 def rotate(direct):
     if direct == "left":
         print("Rotating to the left")
-        msg.angular.z = 0.3
+        msg.angular.z = 0.4
     else:
         print("Rotating to the right")
-        msg.angular.z = -0.3
+        msg.angular.z = -0.4
 
 
 def translate(direct):
@@ -53,6 +50,23 @@ def bb_intersection_over_union(boxA, boxB):
     boxBArea = (boxB[2] - boxB[0] + 1) * (boxB[3] - boxB[1] + 1)
     iou = interArea / float(boxAArea + boxBArea - interArea)
     return iou
+
+
+def follow(track_box, frame_w, distance):
+    # print(track_box)
+    robot_stop()
+    if track_box[0] < tuple([10]):
+        print("Person out of frame")
+        direction = "left"
+    elif (frame_w - track_box[2]) < tuple([10]):
+        print("Person out of frame")
+        direction = "right"
+    else:
+        if distance > 0:
+            direction = "right"
+        else:
+            direction = "left"
+    rotate(direction)
 
 
 class Detection:
@@ -95,6 +109,8 @@ def talker(my_image=None):
     block_count = 0
     pre_center = 0
     follow_flag = False
+    min_distance = 1.3
+    max_distance = 2.0
     while not rospy.is_shutdown():
         # hello_str = "hello world %s" % rospy.get_time()
         # rospy.loginfo(hello_str)
@@ -104,9 +120,8 @@ def talker(my_image=None):
         frame = detection.my_image
         if frame is None:
             break
-        start = time.time()
         if not block_flag:
-            (h, w) = frame.shape[:2]
+            (frame_h, frame_w) = frame.shape[:2]
             blob = cv2.dnn.blobFromImage(cv2.resize(frame, (300, 300)), 0.007843,
                                          (300, 300), 127.5)
             net.setInput(blob)
@@ -117,30 +132,29 @@ def talker(my_image=None):
                 if confidence > 0.3:
                     idx = int(detections[0, 0, i, 1])
                     if idx == 15:
-                        box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+                        box = detections[0, 0, i, 3:7] * np.array([frame_w, frame_h, frame_w, frame_h])
                         (x1, y1, x2, y2) = box.astype("int")
                         person_box.append((x1, y1, x2, y2))
             if len(person_box) < 1:
                 print("No person detected")
                 if track_box is not None:
-                    # print(track_box)
-                    robot_stop()
-                    if track_box[0] < tuple([10]):
-                        print("Person out of frame")
-                        direction = "left"
-                    elif (frame.shape[1] - track_box[2]) < tuple([10]):
-                        print("Person out of frame")
-                        direction = "right"
-                    else:
-                        if distance > 0:
-                            direction = "right"
-                        else:
-                            direction = "left"
-                    rotate(direction)
+                    follow(track_box, frame_w, distance)
+                    # robot_stop()
+                    # if track_box[0] < tuple([10]):
+                    #     print("Person out of frame")
+                    #     direction = "left"
+                    # elif (frame_w - track_box[2]) < tuple([10]):
+                    #     print("Person out of frame")
+                    #     direction = "right"
+                    # else:
+                    #     if distance > 0:
+                    #         direction = "right"
+                    #     else:
+                    #         direction = "left"
+                    # rotate(direction)
                     track_box = None
                     follow_flag = True
                 continue
-
             else:
                 if track_box is not None:
                     # print(track_box)
@@ -163,25 +177,26 @@ def talker(my_image=None):
                     if len(person_iou) < 1:
                         if track_box is not None:
                             print("No person detected near old track box")
-                            robot_stop()
-                            if track_box[0] < tuple([10]):
-                                print("Person out of frame")
-                                direction = "left"
-                            elif (frame.shape[1] - track_box[2]) < tuple([10]):
-                                print("Person out of frame")
-                                direction = "right"
-                            else:
-                                if distance > 0:
-                                    direction = "right"
-                                else:
-                                    direction = "left"
-                            rotate(direction)
+                            follow(track_box, frame_w, distance)
+                            # robot_stop()
+                            # if track_box[0] < tuple([10]):
+                            #     print("Person out of frame")
+                            #     direction = "left"
+                            # elif (frame_w - track_box[2]) < tuple([10]):
+                            #     print("Person out of frame")
+                            #     direction = "right"
+                            # else:
+                            #     if distance > 0:
+                            #         direction = "right"
+                            #     else:
+                            #         direction = "left"
+                            # rotate(direction)
                             track_box = None
                             follow_flag = True
                         continue
                     person_box = [person_box[k] for k in person_iou_idx]
                     if len(person_iou) == 1:
-                        person_iou_max = person_box[0]
+                        person_iou_max = person_iou[0]
                     elif len(person_iou) > 1:
                         print("2 person near old trackbox")
                         person_idx = np.argmax(person_iou)
@@ -220,13 +235,9 @@ def talker(my_image=None):
                     # print("Person legs")
                     (x1, y1, x2, y2) = person_box[np.argmin(person_area)]
                     track_box = (x1, y1, x2, y2)
-                    # cv2.rectangle(frame, track_box[:2], track_box[2:],
-                    #               (0, 255, 0), 2)
                 else:
                     if track_box is not None:
                         track_box = person_iou_max
-                        # cv2.rectangle(frame, track_box[:2], track_box[2:],
-                        #               (0, 255, 0), 2)
                     else:
                         continue
                 w = track_box[2] - track_box[0]
@@ -241,19 +252,19 @@ def talker(my_image=None):
                         robot_stop()
                         follow_flag = False
                 else:
-                    if z < 1.0:
+                    if z < min_distance:
                         direct = "backward"
                         translate(direct)
-                    elif z > 1.8:
+                    elif z > max_distance:
                         direct = "forward"
                         translate(direct)
                     else:
                         robot_stop()
-                    if center < int(frame.shape[1] / 4):
+                    if center < int(frame_w / 4):
                         direct = "left"
                         rotate(direct)
                         follow_flag = True
-                    elif center > 3 * int(frame.shape[1] / 4):
+                    elif center > 3 * int(frame_w / 4):
                         direct = "right"
                         rotate(direct)
                         follow_flag = True
@@ -280,14 +291,13 @@ def talker(my_image=None):
                 print("Block count: {}".format(block_count))
                 (success, box) = tracker.update(frame)
                 if success:
-                    (x, y, ws, h) = [int(v) for v in box]
+                    (x, y, w, h) = [int(v) for v in box]
                     track_box = (x, y, x + w, y + h)
                     cv2.rectangle(frame, track_box[:2], track_box[2:],
                                   (0, 255, 0), 2)
         cv2.imshow("Output", frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-        stop = start
         # rate.sleep()
 
 
