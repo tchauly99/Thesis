@@ -86,7 +86,7 @@ bool flag_b[NUMBER_OF_FLAG];
 
 char log_msg[100];
 
-float alpha = 0.15, beta=0.1; //0.002 0.998  //0.055 0.08
+float alpha = 0.15, beta=0.13;  //0.15 0.1  //0.002 0.998  //0.055 0.08
 
 uint8_t cnt=0;
 uint8_t cnt_1=0;
@@ -94,6 +94,8 @@ uint8_t cnt_1=0;
 float goal_cmd_vel[2] = {0.0, 0.0}; //from ros command in linear and angular value
 float goal_wheel_vel_PID[2] = {0.0, 0.0};
 //float pre_goal_wheel_vel[2] = {0.0, 0.0};
+float Left_speed, Right_speed;
+float goal_velocity_L=0, goal_velocity_R=0;
 
 float delta_theta, theta, last_theta = 0.0;
 float robot_speed;

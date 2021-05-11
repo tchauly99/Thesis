@@ -10,8 +10,9 @@
 //#define IMU_CALIB
 #define ROS
 //#define DUTY_DB
-Encoder Enc_L((13*4*28.8461), LEFT, 3, 1, 0.01);
-Encoder Enc_R((13*4*28.8461), RIGHT, 3, 1, 0.01); //24.0384
+//3 1.3 0.01
+Encoder Enc_L((13*4*28.8461), LEFT, 3, 1.3, 0.01); //he so chia hop so, wheel name, Kp, Ki, Kd
+Encoder Enc_R((13*4*28.8461), RIGHT, 3, 1.3, 0.01); //24.0384
 
 //float Encoder::test = 2;
 
@@ -346,10 +347,12 @@ void Control_motor(void){
 	linear_vel = goal_cmd_vel[LINEAR];
 	angular_vel = goal_cmd_vel[ANGULAR];
 
+
 	/*Differential drive for 2 wheels*/
 	Enc_L.goal_wheel_vel =(linear_vel -(angular_vel*WHEEL_SEPERATION/2))*(60/(2*PI*WHEEL_RADIUS));
 	Enc_R.goal_wheel_vel =(linear_vel +(angular_vel*WHEEL_SEPERATION/2))*(60/(2*PI*WHEEL_RADIUS));
-
+	goal_velocity_L = Enc_L.goal_wheel_vel;
+	goal_velocity_R = Enc_R.goal_wheel_vel;
 	/*Lowpass filter for goal velocity*/
 	Low_pass_filter(&Enc_L.goal_wheel_vel, &Enc_L.pre_goal_wheel_vel, alpha);
 	Low_pass_filter(&Enc_R.goal_wheel_vel, &Enc_R.pre_goal_wheel_vel, alpha);
@@ -362,6 +365,8 @@ void Control_motor(void){
 void Get_encoder(void){
 	Enc_L.get_encoder();
 	Enc_R.get_encoder();
+	Left_speed = Enc_L.encoder_speed;
+	Right_speed = Enc_R.encoder_speed;
 //	nh.spinOnce();
 }
 void Encoder::PID_control(void){
