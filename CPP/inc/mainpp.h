@@ -100,6 +100,8 @@ float goal_velocity_L=0, goal_velocity_R=0;
 float delta_theta, theta, last_theta = 0.0;
 float robot_speed;
 
+double Kp=3, Ki=6.0, Kd=0.01;
+double PID_gain=1.5;
 uint8_t buffer[3];
 
 float quat[4];

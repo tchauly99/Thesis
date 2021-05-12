@@ -11,8 +11,9 @@
 #define ROS
 //#define DUTY_DB
 //3 1.3 0.01
-Encoder Enc_L((13*4*28.8461), LEFT, 3, 1.3, 0.01); //he so chia hop so, wheel name, Kp, Ki, Kd
-Encoder Enc_R((13*4*28.8461), RIGHT, 3, 1.3, 0.01); //24.0384
+
+Encoder Enc_L((13*4*28.8461), LEFT, Kp, Ki, Kd); //he so chia hop so, wheel name, Kp, Ki, Kd
+Encoder Enc_R((13*4*28.8461), RIGHT, Kp, Ki, Kd); //24.0384
 
 //float Encoder::test = 2;
 
@@ -377,7 +378,7 @@ void Encoder::PID_control(void){
 
 	if(goal_wheel_vel<0.7 && goal_wheel_vel>-0.7)
 		uk=0;
-	else uk += Kp*(ek-ek_1) +Ki*(T/2)*(ek+ek_1) + (Kd/T)*(ek-2*ek_1+ek_2);
+	else uk += PID_gain*Kp*(ek-ek_1) +PID_gain*Ki*(T/2)*(ek+ek_1) + (PID_gain*Kd/T)*(ek-2*ek_1+ek_2);
 
 	out = uk;
 	if(uk>u_max) out=u_max;
