@@ -153,9 +153,6 @@ void MPU6050_Config(MPU_ConfigTypeDef *config)
 //	Buffer |= 0x02;
 //	I2C_Write8(INT_PIN_CFG, Buffer);
 	MPU6050_Bypass_En();
-	
-
-
 }
 
 //5- Get Sample Rate Divider

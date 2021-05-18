@@ -2,7 +2,7 @@
  * MADGWICK.h
  *
  *  Created on: Feb 26, 2021
- *      Author: chau
+ *      Author: tchauly99
  */
 
 #ifndef COMPONENTS_MADGWICK_THESIS_MADGWICK_H_

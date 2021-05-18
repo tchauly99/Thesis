@@ -2,7 +2,7 @@
  * MPU9250_RegMap.h
  *
  *  Created on: Mar 2, 2021
- *      Author: chau
+ *      Author: tchauly99
  */
 
 #ifndef COMPONENTS_MPU9250_MPU9250_REGMAP_H_

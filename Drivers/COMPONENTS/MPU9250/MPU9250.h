@@ -2,7 +2,7 @@
  * MPU9250.h
  *
  *  Created on: Jan 26, 2021
- *      Author: chau
+ *      Author: tchauly99
  */
 
 #ifndef MPU9250_MPU9250_H_
@@ -41,7 +41,7 @@ void MPU9250_AG_Calibrate(ScaledData_Def* accel_bias_disp, ScaledData_Def* gyro_
 void MPU9250_AK8963_Config(void);
 void MPU9250_AK8963_AutoCalib(void);
 void MPU9250_AK8963_GetMag_Scaled(ScaledData_Def* mag_scaled);
-void MPU9250_AK8963_Set_Hard_Soft_Iron(ak8963_soft_iron_scale_t *soft_iron, ak8963_hard_iron_bias_t hard_iron);
+void MPU9250_AK8963_Set_Hard_Soft_Iron(ak8963_soft_iron_scale_t *soft_iron_p, ak8963_hard_iron_bias_t hard_iron_p);
 void MPU9250_AK8963_GetSample(void);
 //void MPU9250_AK8963_send_uart(float* f);
 void MPU9250_Bypass_En(void);

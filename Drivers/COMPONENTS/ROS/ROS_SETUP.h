@@ -2,7 +2,7 @@
  * ROS_SETUP.h
  *
  *  Created on: Jan 26, 2021
- *      Author: chau
+ *      Author: tchauly99
  */
 
 #ifndef COMPONENTS_ROS_ROS_SETUP_H_

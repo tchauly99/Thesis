@@ -2,7 +2,7 @@
  * MPU9250.H
  *
  *  Created on: Feb 26, 2021
- *      Author: chau
+ *      Author: tchauly99
  */
 
 #include "MPU9250.h"
@@ -196,9 +196,9 @@ void MPU9250_AK8963_GetMag_Scaled(ScaledData_Def* mag_scaled){
 	mag_scaled->y = mag_scaled_.x_axis;
 	mag_scaled->z = -mag_scaled_.z_axis;
 }
-void MPU9250_AK8963_Set_Hard_Soft_Iron(ak8963_soft_iron_scale_t *soft_iron, ak8963_hard_iron_bias_t hard_iron){
-	ak8963_set_soft_iron_scale(ak8963_handle_p, soft_iron);
-	ak8963_set_hard_iron_bias(ak8963_handle_p, hard_iron);
+void MPU9250_AK8963_Set_Hard_Soft_Iron(ak8963_soft_iron_scale_t *soft_iron_p, ak8963_hard_iron_bias_t hard_iron_p){
+	ak8963_set_soft_iron_scale(ak8963_handle_p, soft_iron_p);
+	ak8963_set_hard_iron_bias(ak8963_handle_p, hard_iron_p);
 }
 void MPU9250_AK8963_GetSample(void){
 //	int i, sample_count;
@@ -225,7 +225,7 @@ void MPU9250_AK8963_GetSample(void){
 	int16_t Sample[3];
 	char buffer[50];
 	int n=0;
-
+	i ++;
 	if (i > 100)
 	{
 		ak8963_raw_data_t mag_raw;
@@ -239,34 +239,3 @@ void MPU9250_AK8963_GetSample(void){
 	HAL_Delay(5);
 
 }
-//void MPU9250_AK8963_send_uart(float* f){
-//	char c=0;
-//	uint8_t nguyen=0, du=0;
-//	float ff;
-//	for(int k=0; k<3; k++){
-//		du=f[k];
-//		ff = f[k]-(float)du;
-//		for (int i=0; i<4; i++){
-//			nguyen = du/pow(10, 3-i);
-//			du = du - nguyen*pow(10, 3-i);
-//			nguyen+=48;
-//			HAL_UART_Transmit(&huart4, &nguyen, 1, 100);
-//		}
-//		du = (int)(ff*10000);
-//		c = '.';
-//		nguyen = (uint8_t)c;
-//		HAL_UART_Transmit(&huart4, &nguyen, 1, 100);
-//		for (int i=0; i<4; i++){
-//			nguyen = du/pow(10, 3-i);
-//			du = du - nguyen*pow(10, 3-i);
-//			nguyen+=48;
-//			HAL_UART_Transmit(&huart4, &nguyen, 1, 100);
-//		}
-//		c='\n';
-//		nguyen=(uint8_t)c;
-//		HAL_UART_Transmit(&huart4, &nguyen, 1, 100);
-//	}
-//	c='\n';
-//	nguyen=(uint8_t)c;
-//	HAL_UART_Transmit(&huart4, &nguyen, 1, 100);
-//}

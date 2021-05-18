@@ -1,3 +1,4 @@
+//Edited by tchauly99 -- 2021
 #include "ak8963.h"
 
 #define AK8963_WHO_AM_I             0x00 //should return 0x48

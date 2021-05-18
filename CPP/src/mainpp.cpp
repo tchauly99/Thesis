@@ -2,7 +2,7 @@
  * mainpp.cpp
  *
  *  Created on: Feb 2, 2021
- *      Author: chau
+ *      Author: tchauly99
  */
 #define CODE_CPP
 #include "mainpp.h"
@@ -76,10 +76,6 @@ void setup(void){
 	HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
 
 	//IMU_600USD_GetSample();
-#endif
-#ifndef IMU_600USD
-	//Get magnetometer samples for calib, rotate IMU
-	//MPU9250_AK8963_GetSample();
 #endif
 	//HAL_Delay(2000);
 	//str_msg.data = hello;
@@ -182,7 +178,7 @@ void ros_setup(void)
 	/*subcribe*/
 	nh.subscribe(toggle_sub);
 	nh.subscribe(cmd_vel_sub);          /*!< Subscribe "cmd_vel" topic to get motor cmd */
-    //nh.subscribe(reset_sub);            /*!< Subscribe "reset" topic */
+    nh.subscribe(reset_sub);            /*!< Subscribe "reset" topic */
 
 	/*advertise*/
 //	nh.advertise(chatter);
@@ -209,11 +205,13 @@ void IMU_600USD_Read(void){
 	imu_value.pitch = atof(imu_prevalue.pitch)/100.0;
 	imu_value.yaw = -atof(imu_prevalue.yaw)/100.0;
 	//nh.spinOnce();
-
-//	memcpy(IMU_premag.x, &imu_cache[61], 5);
-//	memcpy(IMU_premag.y, &imu_cache[67], 5);
-//	memcpy(IMU_premag.z, &imu_cache[73], 5);
-//
+#ifdef IMU_600USD
+#ifdef IMU_CALIB
+	memcpy(IMU_premag.x, &imu_cache[61], 5);
+	memcpy(IMU_premag.y, &imu_cache[67], 5);
+	memcpy(IMU_premag.z, &imu_cache[73], 5);
+#endif
+#endif
 //	IMU_mag.x = atof(IMU_premag.x);
 //	IMU_mag.y = atof(IMU_premag.y);
 //	IMU_mag.z = atof(IMU_premag.z);

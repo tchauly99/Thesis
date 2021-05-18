@@ -2,7 +2,7 @@
  * MADGWICK.cpp
  *
  *  Created on: Feb 26, 2021
- *      Author: chau
+ *      Author: tchauly99
  */
 
 #include <THESIS_MADGWICK.h>

@@ -2,7 +2,7 @@
  * maipp.h
  *
  *  Created on: Feb 2, 2021
- *      Author: chau
+ *      Author: tchauly99
  */
 
 #ifndef INC_MAINPP_H_
@@ -109,8 +109,10 @@ float quat[4];
 ak8963_soft_iron_corr_t soft_iron={1.1992, 1.20312, 1.1601};
 //ak8963_soft_iron_scale_t Soft_iron={{0.0035, 0.0001,-0.0001}, {0.0001, 0.0034, -0.0001}, {-0.0001, -0.0001, 0.0035}};
 //ak8963_hard_iron_bias_t Hard_iron={32.9256, 255.7876, -172.9932};
-ak8963_soft_iron_scale_t Soft_iron={{0.0053, 0.0003, -0.0001}, {0.0003, 0.0052, 0.0000}, {-0.0001, 0.0000, 0.0056}};
-ak8963_hard_iron_bias_t Hard_iron={117.0628, 423.1777, -119.8184};
+//ak8963_soft_iron_scale_t Soft_iron={{0.0053, 0.0003, -0.0001}, {0.0003, 0.0052, 0.0000}, {-0.0001, 0.0000, 0.0056}};
+//ak8963_hard_iron_bias_t Hard_iron={117.0628, 423.1777, -119.8184};
+ak8963_soft_iron_scale_t Soft_iron={{0.0044, -0.0001, -0.0003}, {-0.0001, 0.0041, -0.0002}, {-0.0003, -0.0002, 0.0059}};
+ak8963_hard_iron_bias_t Hard_iron={173.8743, 252.2351, -224.3608};
 ScaledData_Def Accel_bias_disp, Gyro_bias_disp;
 //uint8_t Data_glob[2];
 void IMU_Config(void);
