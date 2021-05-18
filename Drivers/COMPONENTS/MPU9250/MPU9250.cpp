@@ -201,31 +201,12 @@ void MPU9250_AK8963_Set_Hard_Soft_Iron(ak8963_soft_iron_scale_t *soft_iron_p, ak
 	ak8963_set_hard_iron_bias(ak8963_handle_p, hard_iron_p);
 }
 void MPU9250_AK8963_GetSample(void){
-//	int i, sample_count;
-//	sample_count = 2000;
-//	int16_t Sample[3];
-//	char buffer[50];
-//	int n=0;
-//	for (i = 0; i < sample_count + 100; i++)            /*!< Dismiss 100 first value */
-//	    {
-//	        if (i > 100 && i <= (sample_count + 100))
-//	        {
-//	            ak8963_raw_data_t mag_raw;
-//	            ak8963_get_mag_raw(ak8963_handle_p, &mag_raw);
-//	            Sample[0] = (mag_raw.x_axis);
-//	            Sample[1] = (mag_raw.y_axis);
-//	            Sample[2] = (mag_raw.z_axis);
-//	            n = sprintf(buffer,"%10d, %10d, %10d \n", Sample[0], Sample[1], Sample[2]);
-//	            HAL_UART_Transmit(&huart4, (uint8_t*)buffer, n, 100);
-//	            //MPU9250_AK8963_send_uart(Sample);
-//	        }
-//	        HAL_Delay(15);
-//	    }
 	static int i;
 	int16_t Sample[3];
 	char buffer[50];
 	int n=0;
 	i ++;
+	//omit first 100 values
 	if (i > 100)
 	{
 		ak8963_raw_data_t mag_raw;
@@ -237,5 +218,4 @@ void MPU9250_AK8963_GetSample(void){
 		HAL_UART_Transmit(&huart4, (uint8_t*)buffer, n, 100);
 	}
 	HAL_Delay(5);
-
 }

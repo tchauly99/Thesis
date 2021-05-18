@@ -42,7 +42,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			Get_encoder();
 			robot_speed = (Enc_L.encoder_speed_inmeter + Enc_R.encoder_speed_inmeter)*100/2.0;
 			//yaw_msg.data = odom_pose[0];
-			yaw_msg.data = robot_speed;
+			yaw_msg.data = 180*(odom_pose[2])/PI;
 #ifndef DUTY_DB
 			Control_motor();
 #endif
@@ -56,8 +56,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 }
 void setup(void){
-	//ros_setup();
-	//HAL_UART_Receive_DMA(&huart5, serial_buffer, 3);
 
 #ifndef IMU_600USD
 	//Choose if to calib IMU:
@@ -66,17 +64,12 @@ void setup(void){
 	//MPU9250_AK8963_AutoCalib();
 #endif
 
-#ifdef ROS
 	ros_setup();
-#endif
-#ifdef IMU_CALIB
-	ros_setup();
-#endif
+
 #ifdef IMU_600USD
 	HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
-
-	//IMU_600USD_GetSample();
 #endif
+
 	//HAL_Delay(2000);
 	//str_msg.data = hello;
 	HAL_TIM_Base_Start_IT(&htim9);
@@ -165,7 +158,7 @@ void ros_setup(void)
 {
 	nh.initNode();
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
-#ifndef IMU_CALIB
+#ifdef ROS
 	while(!nh.connected())
 	  {
 		nh.spinOnce();
@@ -194,9 +187,6 @@ void ros_setup(void)
 
 }
 void IMU_600USD_Read(void){
-//	float cache[3];
-
-	//memcpy(imu_cache, &imu_temp[IMU_index], sizeof(imu_cache));
 	memcpy(imu_prevalue.roll, &imu_cache[1], 6);
 	memcpy(imu_prevalue.pitch, &imu_cache[8], 6);
 	memcpy(imu_prevalue.yaw, &imu_cache[15], 6);
@@ -204,7 +194,7 @@ void IMU_600USD_Read(void){
 	imu_value.roll = -atof(imu_prevalue.roll)/100.0;
 	imu_value.pitch = atof(imu_prevalue.pitch)/100.0;
 	imu_value.yaw = -atof(imu_prevalue.yaw)/100.0;
-	//nh.spinOnce();
+
 #ifdef IMU_600USD
 #ifdef IMU_CALIB
 	memcpy(IMU_premag.x, &imu_cache[61], 5);
@@ -212,36 +202,13 @@ void IMU_600USD_Read(void){
 	memcpy(IMU_premag.z, &imu_cache[73], 5);
 #endif
 #endif
-//	IMU_mag.x = atof(IMU_premag.x);
-//	IMU_mag.y = atof(IMU_premag.y);
-//	IMU_mag.z = atof(IMU_premag.z);
-
 }
 void IMU_600USD_GetSample(void){
-//	int i, sample_count;
-//	sample_count = 2000;
-//	IMU_sensor_prevalue IMU_magsample;
-//	char buffer[50];
-//	for (i = 0; i < sample_count + 100; i++)            /*!< Dismiss 100 first value */
-//	    {
-//	        if (i > 100 && i <= (sample_count + 100))
-//	        {
-//	        	memcpy(&IMU_magsample, &IMU_premag, sizeof(IMU_premag));
-//	        	memcpy(buffer, IMU_magsample.x, sizeof(IMU_magsample.x));
-//	        	buffer[5] = buffer[12] = ',';
-//	        	buffer[18] = '\n';
-//	        	memcpy(&buffer[6], IMU_magsample.y, sizeof(IMU_magsample.y));
-//	        	memcpy(&buffer[13], IMU_magsample.z, sizeof(IMU_magsample.z));
-//	            //n = sprintf(buffer,"%10.2f, %10.2f, %10.2f \n", Sample[0], Sample[1], Sample[2]);
-//	            HAL_UART_Transmit(&huart4, (uint8_t*)buffer, 19, 100);
-//	        }
-//	        HAL_Delay(20);
-//	    }
-
 	static int i;
 	IMU_sensor_prevalue IMU_magsample;
 	char buffer[50];
 	i++;
+	//omit first 100 values
 	if (i > 100)
 	{
 		memcpy(&IMU_magsample, &IMU_premag, sizeof(IMU_premag));
@@ -250,32 +217,10 @@ void IMU_600USD_GetSample(void){
 		buffer[17] = '\n';
 		memcpy(&buffer[6], IMU_magsample.y, sizeof(IMU_magsample.y));
 		memcpy(&buffer[12], IMU_magsample.z, sizeof(IMU_magsample.z));
-		HAL_UART_Transmit(&huart4, (uint8_t*)buffer, 18, 100);
+ 		HAL_UART_Transmit(&huart5, (uint8_t*)buffer, 18, 100);
 	}
 }
-//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-//{
-//
-////	if(huart->Instance== huart5.Instance){
-////	HAL_UART_DMAStop(&huart5);
-////	 uint8_t i=0;
-////	 memcpy(imu_temp, imu_receive_buffer, IMU_600USD_SIZE*2);
-////	 for(i=0; i<(IMU_600USD_SIZE*2); i++){
-////		 if (imu_temp[i]=='\n'){
-////			 if(imu_temp[i+IMU_600USD_SIZE-1]=='\r'){
-////				 memcpy(imu_cache, &imu_temp[i], IMU_600USD_SIZE);
-////				 break;
-////			 }
-////		 }
-////	 }
-////	 //nh.spinOnce();
-////	 IMU_index=i;
-////	 IMU_600USD_Read();
-////	 HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
-////	if(huart->Instance== huart5.Instance){
-////		memcpy(serial_cache, serial_buffer, 3);
-////	}
-//}
+
 void IMU_Config(void){
 	MPU9250_Config();
 	MPU9250_AK8963_Config();
@@ -359,14 +304,12 @@ void Control_motor(void){
 	/*PID controller for velocity control*/
 	Enc_L.PID_control();
 	Enc_R.PID_control();
-//	nh.spinOnce();
 }
 void Get_encoder(void){
 	Enc_L.get_encoder();
 	Enc_R.get_encoder();
 	Left_speed = Enc_L.encoder_speed;
 	Right_speed = Enc_R.encoder_speed;
-//	nh.spinOnce();
 }
 void Encoder::PID_control(void){
 	double out;
@@ -477,10 +420,13 @@ void get_speed_100ms(float* encoder_inrad_100){
 	pre_counter_100[RIGHT]=TIM2->CNT;
 }
 void get_odom(void){
-	float delta_s, roll, pitch, yaw;
+#ifndef IMU_600USD
+	float roll, pitch, yaw;
 	float quat_data[4];
+#endif
 	float v,w;
 	float encoder_inrad[2];
+	float delta_s;
 	static uint8_t delay=0;
 
 	get_speed_100ms(encoder_inrad);
@@ -523,7 +469,8 @@ void get_odom(void){
 	}
 	else{
 		delta_theta = theta - last_theta;
-		if ( delta_theta>=6.0 | delta_theta<= -6.0)
+		//To remove error when yaw angle passes pi or 0 degree
+		if ( (delta_theta>=6.0) | (delta_theta<= -6.0))
 			delta_theta = 0;
 		odom_pose[0] += delta_s * cos(odom_pose[2] + (delta_theta / 2.0));
 		odom_pose[1] += delta_s * sin(odom_pose[2] + (delta_theta / 2.0));

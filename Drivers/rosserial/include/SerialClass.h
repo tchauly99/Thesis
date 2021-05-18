@@ -219,8 +219,6 @@ extern "C" void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 				 }
 			 }
 		 }
-		 //nh.spinOnce();
-//		 IMU_index=i;
 		 IMU_600USD_Read();
 		 //HAL_UART_Receive_DMA(&huart5, imu_receive_buffer, IMU_600USD_SIZE*2);
 	}

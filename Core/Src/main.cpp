@@ -448,7 +448,7 @@ static void MX_UART5_Init(void)
   huart5.Init.WordLength = UART_WORDLENGTH_8B;
   huart5.Init.StopBits = UART_STOPBITS_1;
   huart5.Init.Parity = UART_PARITY_NONE;
-  huart5.Init.Mode = UART_MODE_RX;
+  huart5.Init.Mode = UART_MODE_TX_RX;
   huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart5.Init.OverSampling = UART_OVERSAMPLING_16;
   if (HAL_UART_Init(&huart5) != HAL_OK)
