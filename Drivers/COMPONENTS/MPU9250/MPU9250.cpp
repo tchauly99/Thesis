@@ -211,11 +211,13 @@ void MPU9250_AK8963_GetSample(void){
 	{
 		ak8963_raw_data_t mag_raw;
 		ak8963_get_mag_raw(ak8963_handle_p, &mag_raw);
+		if ((mag_raw.x_axis!=0) && (mag_raw.y_axis!=0) && (mag_raw.z_axis!=0)){
 		Sample[0] = (mag_raw.x_axis);
 		Sample[1] = (mag_raw.y_axis);
 		Sample[2] = (mag_raw.z_axis);
 		n = sprintf(buffer,"%10d, %10d, %10d \n", Sample[0], Sample[1], Sample[2]);
-		HAL_UART_Transmit(&huart4, (uint8_t*)buffer, n, 100);
+		HAL_UART_Transmit(&huart5, (uint8_t*)buffer, n, 100);
+		}
 	}
 	HAL_Delay(5);
 }

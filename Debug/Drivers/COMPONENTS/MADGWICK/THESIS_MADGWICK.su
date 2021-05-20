@@ -1,0 +1,6 @@
+gthr-default.h:229:1:int __gthread_key_delete(__gthread_key_t)	16	static
+THESIS_MADGWICK.cpp:15:6:void MADGWICK_Quaternion_Update()	64	static
+THESIS_MADGWICK.cpp:44:6:void MADGWICK_Get_Quaternion(float*)	32	static
+THESIS_MADGWICK.cpp:51:1:void __static_initialization_and_destruction_0(int, int)	16	static
+THESIS_MADGWICK.cpp:51:1:cpp)	8	static
+THESIS_MADGWICK.cpp:51:1:cpp)	8	static

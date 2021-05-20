@@ -171,6 +171,16 @@ void ak8963_get_mag_raw(ak8963_handle_t handle, ak8963_raw_data_t *raw_data)
 			raw_data->y_axis *= handle->asa.y_axis * handle->mag_scaling_factor;
 			raw_data->z_axis *= handle->asa.z_axis * handle->mag_scaling_factor;
 			}
+			else{
+				raw_data->x_axis = 0;
+				raw_data->y_axis = 0;
+				raw_data->z_axis = 0;
+			}
+    }
+    else{
+    	raw_data->x_axis = 0;
+		raw_data->y_axis = 0;
+		raw_data->z_axis = 0;
     }
 }
 

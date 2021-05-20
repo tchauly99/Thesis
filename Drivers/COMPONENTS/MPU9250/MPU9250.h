@@ -16,6 +16,7 @@
 #include <iostream>
 
 extern UART_HandleTypeDef huart4;
+extern UART_HandleTypeDef huart5;
 
 typedef struct{
 	int32_t x;

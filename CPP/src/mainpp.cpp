@@ -6,7 +6,7 @@
  */
 #define CODE_CPP
 #include "mainpp.h"
-#define IMU_600USD
+//#define IMU_600USD
 //#define IMU_CALIB
 #define ROS
 //#define DUTY_DB

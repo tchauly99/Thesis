@@ -1,0 +1,14 @@
+ak8963.cpp:50:13:void _i2c_write_func(ak8963_handle_t, uint8_t, uint8_t*, uint16_t, uint32_t)	56	dynamic
+ak8963.cpp:62:13:void _i2c_read_func(ak8963_handle_t, uint8_t, uint8_t*, uint16_t, uint32_t)	40	static
+ak8963.cpp:70:13:void _ak8963_set_func(ak8963_handle_t, read_func, write_func)	24	static
+ak8963.cpp:76:17:ak8963* ak8963_init(ak8963_cfg_t*, I2C_HandleTypeDef*)	40	static
+ak8963.cpp:155:6:void ak8963_get_mag_raw(ak8963_handle_t, ak8963_raw_data_t*)	48	static
+ak8963.cpp:187:6:void ak8963_get_mag_cali(ak8963_handle_t, ak8963_cali_data_t*)	48	static
+ak8963.cpp:202:6:void ak8963_get_mag_scale(ak8963_handle_t, ak8963_scale_data_t*)	96	static
+ak8963.cpp:242:6:void ak8963_set_hard_iron_bias(ak8963_handle_t, ak8963_hard_iron_bias_t)	24	static
+ak8963.cpp:249:6:void ak8963_get_hard_iron_bias(ak8963_handle_t, ak8963_hard_iron_bias_t*)	16	static
+ak8963.cpp:256:6:void ak8963_set_soft_iron_corr(ak8963_handle_t, ak8963_soft_iron_corr_t)	24	static
+ak8963.cpp:262:6:void ak8963_set_soft_iron_scale(ak8963_handle_t, ak8963_soft_iron_scale_t*)	16	static
+ak8963.cpp:266:6:void ak8963_get_soft_iron_corr(ak8963_handle_t, ak8963_soft_iron_corr_t*)	16	static
+ak8963.cpp:273:6:void ak8963_get_mag_sens_adj(ak8963_handle_t, ak8963_sens_adj_t*)	16	static
+ak8963.cpp:280:6:void ak8963_auto_calib(ak8963_handle_t)	64	static
